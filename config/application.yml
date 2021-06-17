@@ -1,0 +1,7 @@
+
+sso.jwt.internal.signature.key:
+  type: VALUE
+  value: JWTSecretKeyDontUseInProduction!
+
+logging.level:
+  com.mybank.dbs.payments.integration: INFO

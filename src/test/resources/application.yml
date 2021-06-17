@@ -1,0 +1,24 @@
+debug: true
+
+#Disable discovery
+spring:
+   cloud:
+      discovery:
+         enabled: false
+      config:
+         discovery:
+            enabled: false
+
+sso:
+  jwt:
+    internal:
+      signature:
+        key:
+           type: VALUE
+           value: JWTSecretKeyDontUseInProduction!
+
+logging:
+  level:
+    root: WARN
+    com.backbase: DEBUG
+    com.mybank: DEBUG
