@@ -1,47 +1,56 @@
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns="http://maven.apache.org/POM/4.0.0"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+	xmlns="http://maven.apache.org/POM/4.0.0"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.3.9.RELEASE</version>
-        <relativePath />
-    </parent>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>2.3.9.RELEASE</version>
+		<relativePath />
+	</parent>
 
-    <groupId>com.mybank.dbs.payments.integration</groupId>
-    <artifactId>payments-batch-integration-sample</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
-    <packaging>war</packaging>
-    <name>Backbase :: Digital Banking Services :: my-bank-payments-batch-integration-service</name>
+	<groupId>com.mybank.dbs.payments.integration</groupId>
+	<artifactId>payments-batch-integration-sample</artifactId>
+	<version>1.0.1-SNAPSHOT</version>
+	<packaging>war</packaging>
+	<name>Backbase :: Digital Banking Services :: my-bank-payments-batch-integration-service</name>
 
-    <properties>
-        <java.version>11</java.version>
-        <swagger-annotations.version>1.6.2</swagger-annotations.version>
-        <jackson-databind-nullable.version>0.2.1</jackson-databind-nullable.version>
-        <jsr305.version>3.0.2</jsr305.version>
-        <specs.path>${project.build.directory}/specs</specs.path>
-    </properties>
+	<!-- tag::add-properties[] -->
+	<properties>
+		<java.version>11</java.version>
+		<boat-maven-plugin.version>0.14.8</boat-maven-plugin.version>
+		<jsr305.version>3.0.2</jsr305.version>
+		
+		<specs.path>${project.build.directory}/specs</specs.path>
+		<payment-batch-integration-inbound-api.version>2.3.0</payment-batch-integration-inbound-api.version>
+		<payment-batch-integration-outbound-api.version>2.3.0</payment-batch-integration-outbound-api.version>
+	</properties>
+	<!-- end::add-properties[] -->
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-		        <artifactId>service-sdk-starter-core</artifactId>
-		        <groupId>com.backbase.buildingblocks</groupId>
-		        <version>12.3.0</version>
-            </dependency>
-            <dependency>
-                <groupId>com.backbase.dbs</groupId>
-                <artifactId>banking-services-bom</artifactId>
-				<version>2.20.4.1</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
+	<!-- tag::add-dependency-management[] -->
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>service-sdk-starter-core</groupId>
+				<artifactId>com.backbase.buildingblocks</artifactId>
+				<version>13.2.0</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.backbase.dbs</groupId>
+				<artifactId>banking-services-bom</artifactId>
+				<version>2.21.2</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+	<!-- end::add-dependency-management[] -->
 
 	<dependencies>
+		<!-- tag::add-building-blocks-dependencies[] -->
 		<dependency>
 			<groupId>com.backbase.buildingblocks</groupId>
 			<artifactId>service-sdk-common-core</artifactId>
@@ -58,6 +67,7 @@
 			<groupId>com.backbase.buildingblocks</groupId>
 			<artifactId>communication</artifactId>
 		</dependency>
+		<!-- end::add-building-blocks-dependencies[] -->
 
 		<dependency>
 			<groupId>io.swagger</groupId>
@@ -73,8 +83,14 @@
 			<version>${jsr305.version}</version>
 		</dependency>
 		<dependency>
-	        <groupId>org.projectlombok</groupId>
-	        <artifactId>lombok</artifactId>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+		</dependency>
+
+		<!-- Spring reactive WebClient -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webflux</artifactId>
 		</dependency>
 
 		<dependency>
@@ -112,6 +128,7 @@
 				</executions>
 			</plugin>
 			
+			<!-- tag::add-dependency-plugin[] -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
@@ -125,8 +142,8 @@
 						<configuration>
 							<artifactItems>
 								<artifactItem>
-									<groupId>com.backbase.dbs.paymentorder</groupId>
-									<artifactId>payment-order-service</artifactId>
+									<groupId>com.backbase.batch</groupId>
+									<artifactId>payment-batch</artifactId>
 									<classifier>api</classifier>
 									<type>zip</type>
 									<overWrite>true</overWrite>
@@ -137,7 +154,9 @@
 					</execution>
 				</executions>
 			</plugin>
-			
+			<!-- end::add-dependency-plugin[] -->
+
+			<!-- tag::add-boat-plugin[] -->
 			<plugin>
 				<groupId>com.backbase.oss</groupId>
 				<artifactId>boat-maven-plugin</artifactId>
@@ -150,25 +169,28 @@
 							<goal>generate-spring-boot-embedded</goal>
 						</goals>
 						<configuration>
-							<inputSpec>${specs.path}/payment/payment-batch-integration-outbound-api-v${payment-batch-integration-outbound-api.version}.yaml</inputSpec>
+							<inputSpec>${specs.path}/payment-batch/payment-batch-integration-outbound-api-v${payment-batch-integration-outbound-api.version}.yaml</inputSpec>
 							<modelPackage>com.backbase.payments.integration.model</modelPackage>
 							<apiPackage>com.backbase.payments.integration.outbound.api</apiPackage>
 						</configuration>
 					</execution>
+					<!-- tag::add-inbound-integration-api[] -->
 					<execution>
 						<id>generate-integration-inbound-client</id>
 						<phase>generate-sources</phase>
 						<goals>
-							<goal>generate-rest-template-embedded</goal>
+							<goal>generate-webclient-embedded</goal>
 						</goals>
 						<configuration>
-							<inputSpec>${specs.path}/payment/payment-batch-integration-inbound-api-v${payment-batch-integration-inbound-api.version}.yaml</inputSpec>
+							<inputSpec>${specs.path}/payment-batch/payment-batch-integration-inbound-api-v${payment-batch-integration-inbound-api.version}.yaml</inputSpec>
 							<modelPackage>com.backbase.payments.integration.model</modelPackage>
 							<apiPackage>com.backbase.payments.integration.inbound.api</apiPackage>
 						</configuration>
 					</execution>
+					<!-- end::add-inbound-integration-api[] -->
 				</executions>
 			</plugin>
+			<!-- end::add-boat-plugin[] -->
 		</plugins>
 	</build>
 
