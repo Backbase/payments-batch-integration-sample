@@ -33,7 +33,6 @@
 		<payment-batch-integration-outbound-api.version>2.5.0</payment-batch-integration-outbound-api.version>
 
 		<nacha-writer.version>1.0.17</nacha-writer.version>
-		<checkerframework.version>3.20.0</checkerframework.version>
 	</properties>
 	<!-- end::add-properties[] -->
 
@@ -81,12 +80,6 @@
 			<groupId>com.backbase.batch.nacha</groupId>
 			<artifactId>nacha-writer</artifactId>
 			<version>${nacha-writer.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.checkerframework</groupId>
-			<artifactId>checker</artifactId>
-			<version>${checkerframework.version}</version>
-			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
