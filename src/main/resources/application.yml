@@ -1,3 +1,7 @@
+service:
+  activeExample: NachaFile
+  batchOrderExecutor.fixedRate: 30000
+
 server:
   port: 9915
 
@@ -8,6 +12,7 @@ eureka:
       public: true
       role: live
   client:
+#    enabled: false
     serviceUrl:
       defaultZone: http://localhost:8080/registry/eureka/
 
@@ -19,3 +24,9 @@ sso:
         key:
           type: ENV
           value: SIG_SECRET_KEY
+
+backbase.batches.nacha.writer:
+  defaultFormat: true
+  settings:
+    immediateDestinationCode: 999999999
+    immediateDestinationName: Immediator
