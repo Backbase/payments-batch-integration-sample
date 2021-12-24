@@ -1,4 +1,4 @@
-package com.mybank.dbs.payments.integration;
+package com.mybank.payments.batches.integration.executor.resttemplate;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -17,17 +17,17 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.backbase.payments.integration.inbound.api.BatchOrdersApi;
-import com.backbase.payments.integration.model.BatchStatus;
-import com.backbase.payments.integration.model.GetBatchOrderResponse;
-import com.backbase.payments.integration.model.GetBatchPaymentsResponse;
-import com.backbase.payments.integration.model.IntegrationBatchPayment;
-import com.backbase.payments.integration.model.PostBatchOrderRequest;
-import com.backbase.payments.integration.model.PutBatchOrderRequest;
-import com.backbase.payments.integration.model.PutBatchOrderResponse;
+import com.backbase.payments.batches.integration.inbound.model.BatchStatus;
+import com.backbase.payments.batches.integration.inbound.model.GetBatchOrderResponse;
+import com.backbase.payments.batches.integration.inbound.model.GetBatchPaymentsResponse;
+import com.backbase.payments.batches.integration.inbound.model.IntegrationBatchPayment;
+import com.backbase.payments.batches.integration.inbound.model.PutBatchOrderRequest;
+import com.backbase.payments.batches.integration.inbound.model.PutBatchOrderResponse;
+import com.backbase.payments.batches.integration.inbound.resttemplate.api.BatchOrdersApi;
+import com.backbase.payments.batches.integration.outbound.model.PostBatchOrderRequest;
 
 @ExtendWith(MockitoExtension.class)
-class BatchOrderExecutorTest {
+class RestBatchOrderExecutorTest {
 	final int PAYMENT_ITEMS_PAGE_SIZE = 100;
 
 	@Mock
@@ -63,7 +63,7 @@ class BatchOrderExecutorTest {
 		mockStatusTransition(batchOrderId, BatchStatus.ACCEPTED, BatchStatus.PROCESSED);
 
 		// execute
-		BatchOrderExecutor batchOrderExecutor = new BatchOrderExecutor(batchOrdersApi, batchRequestQueue);
+		RestBatchOrderExecutor batchOrderExecutor = new RestBatchOrderExecutor(batchOrdersApi, batchRequestQueue);
 		batchOrderExecutor.execute();
 		
 		// validate
@@ -105,7 +105,7 @@ class BatchOrderExecutorTest {
 		mockStatusTransition(batchOrderId, BatchStatus.DOWNLOADING, BatchStatus.REJECTED);
 
 		// execute
-		BatchOrderExecutor batchOrderExecutor = new BatchOrderExecutor(batchOrdersApi, batchRequestQueue);
+		RestBatchOrderExecutor batchOrderExecutor = new RestBatchOrderExecutor(batchOrdersApi, batchRequestQueue);
 		batchOrderExecutor.execute();
 		
 		// validate

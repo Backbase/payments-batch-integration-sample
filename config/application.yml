@@ -1,3 +1,4 @@
+activeExample: RestTemplate
 
 sso.jwt.internal.signature.key:
   type: VALUE

@@ -6,25 +6,30 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.3.9.RELEASE</version>
+		<version>2.4.10</version>
 		<relativePath />
 	</parent>
 
 	<groupId>com.mybank.dbs.payments.integration</groupId>
 	<artifactId>payments-batch-integration-sample</artifactId>
-	<version>1.0.1-SNAPSHOT</version>
+	<version>1.0.2-SNAPSHOT</version>
 	<packaging>war</packaging>
 	<name>Backbase :: Digital Banking Services :: my-bank-payments-batch-integration-service</name>
 
 	<!-- tag::add-properties[] -->
 	<properties>
 		<java.version>11</java.version>
-		<boat-maven-plugin.version>0.14.8</boat-maven-plugin.version>
+		<boat-maven-plugin.version>0.15.2</boat-maven-plugin.version>
 		<jsr305.version>3.0.2</jsr305.version>
-		
+
+		<batches-bom.version>2021.12-rc.14</batches-bom.version>
+
 		<specs.path>${project.build.directory}/specs</specs.path>
-		<payment-batch-integration-inbound-api.version>2.3.0</payment-batch-integration-inbound-api.version>
-		<payment-batch-integration-outbound-api.version>2.3.0</payment-batch-integration-outbound-api.version>
+		<payment-batch-integration-inbound-api.version>2.6.0</payment-batch-integration-inbound-api.version>
+		<payment-batch-integration-outbound-api.version>2.5.0</payment-batch-integration-outbound-api.version>
+
+		<nacha-writer.version>1.0.17</nacha-writer.version>
+		<checkerframework.version>3.20.0</checkerframework.version>
 	</properties>
 	<!-- end::add-properties[] -->
 
@@ -34,14 +39,14 @@
 			<dependency>
 				<groupId>service-sdk-starter-core</groupId>
 				<artifactId>com.backbase.buildingblocks</artifactId>
-				<version>13.2.0</version>
+				<version>13.3.1</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
 			<dependency>
-				<groupId>com.backbase.dbs</groupId>
-				<artifactId>banking-services-bom</artifactId>
-				<version>2.21.2</version>
+				<groupId>com.backbase</groupId>
+				<artifactId>batches-bom</artifactId>
+				<version>${batches-bom.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -67,7 +72,25 @@
 			<groupId>com.backbase.buildingblocks</groupId>
 			<artifactId>communication</artifactId>
 		</dependency>
+		<!-- Required only for reactive client implementation -->
+		<dependency>
+			<groupId>com.backbase.buildingblocks</groupId>
+			<artifactId>service-sdk-web-client</artifactId>
+		</dependency>
 		<!-- end::add-building-blocks-dependencies[] -->
+
+		<!-- Required for working with nacha files -->
+		<dependency>
+			<groupId>com.backbase.batch.nacha</groupId>
+			<artifactId>nacha-writer</artifactId>
+			<version>${nacha-writer.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.checkerframework</groupId>
+			<artifactId>checker</artifactId>
+			<version>${checkerframework.version}</version>
+			<scope>provided</scope>
+		</dependency>
 
 		<dependency>
 			<groupId>io.swagger</groupId>
@@ -87,16 +110,14 @@
 			<artifactId>lombok</artifactId>
 		</dependency>
 
-		<!-- Spring reactive WebClient -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-webflux</artifactId>
-		</dependency>
-
 		<dependency>
 			<groupId>com.backbase.buildingblocks</groupId>
 			<artifactId>service-sdk-starter-test</artifactId>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 
 		<dependency>
@@ -127,7 +148,7 @@
 					</execution>
 				</executions>
 			</plugin>
-			
+
 			<!-- tag::add-dependency-plugin[] -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -170,24 +191,36 @@
 						</goals>
 						<configuration>
 							<inputSpec>${specs.path}/payment-batch/payment-batch-integration-outbound-api-v${payment-batch-integration-outbound-api.version}.yaml</inputSpec>
-							<modelPackage>com.backbase.payments.integration.model</modelPackage>
-							<apiPackage>com.backbase.payments.integration.outbound.api</apiPackage>
+							<modelPackage>com.backbase.payments.batches.integration.outbound.model</modelPackage>
+							<apiPackage>com.backbase.payments.batches.integration.outbound.api</apiPackage>
 						</configuration>
 					</execution>
 					<!-- tag::add-inbound-integration-api[] -->
 					<execution>
-						<id>generate-integration-inbound-client</id>
+						<id>generate-integration-inbound-resttemplate-client</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate-rest-template-embedded</goal>
+						</goals>
+						<configuration>
+							<inputSpec>${specs.path}/payment-batch/payment-batch-integration-inbound-api-v${payment-batch-integration-inbound-api.version}.yaml</inputSpec>
+							<modelPackage>com.backbase.payments.batches.integration.inbound.model</modelPackage>
+							<apiPackage>com.backbase.payments.batches.integration.inbound.resttemplate.api</apiPackage>
+						</configuration>
+					</execution>
+					<!-- end::add-inbound-integration-api[] -->
+					<execution>
+						<id>generate-integration-inbound-webclient-client</id>
 						<phase>generate-sources</phase>
 						<goals>
 							<goal>generate-webclient-embedded</goal>
 						</goals>
 						<configuration>
 							<inputSpec>${specs.path}/payment-batch/payment-batch-integration-inbound-api-v${payment-batch-integration-inbound-api.version}.yaml</inputSpec>
-							<modelPackage>com.backbase.payments.integration.model</modelPackage>
-							<apiPackage>com.backbase.payments.integration.inbound.api</apiPackage>
+							<modelPackage>com.backbase.payments.batches.integration.inbound.model</modelPackage>
+							<apiPackage>com.backbase.payments.batches.integration.inbound.webclient.api</apiPackage>
 						</configuration>
 					</execution>
-					<!-- end::add-inbound-integration-api[] -->
 				</executions>
 			</plugin>
 			<!-- end::add-boat-plugin[] -->

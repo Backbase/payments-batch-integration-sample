@@ -1,9 +1,8 @@
-package com.mybank.dbs.payments.integration;
+package com.mybank.payments.batches.integration.executor.resttemplate;
 
 import com.backbase.buildingblocks.communication.http.HttpCommunicationConfiguration;
-import com.backbase.payments.integration.inbound.ApiClient;
-import com.backbase.payments.integration.inbound.api.BatchOrdersApi;
 import javax.validation.constraints.Pattern;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,9 +11,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
+import com.backbase.payments.batches.integration.inbound.resttemplate.ApiClient;
+import com.backbase.payments.batches.integration.inbound.resttemplate.api.BatchOrdersApi;
+
 @Configuration
 @ConfigurationProperties("backbase.communication.services.dbs.payment-order-service")
-public class ClientConfiguration {
+public class RestTemplateClientConfiguration {
 
     @Value("${backbase.communication.services.dbs.payment-order-service.service-id:payment-order-service}")
     private String serviceId;
@@ -27,8 +29,8 @@ public class ClientConfiguration {
     @Qualifier("interServiceRestTemplate")
     private RestTemplate restTemplate;
 
-    @Bean
-    public BatchOrdersApi createBatchOrdersApi() {
+    @Bean("restTemplateBatchOrdersApi")
+    public BatchOrdersApi batchOrdersApi() {
         return new BatchOrdersApi(createApiClient());
     }
 
