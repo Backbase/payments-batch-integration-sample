@@ -1,8 +1,10 @@
-activeExample: RestTemplate
+activeExample: NachaFile
 
 sso.jwt.internal.signature.key:
   type: VALUE
   value: JWTSecretKeyDontUseInProduction!
 
+#tag::logging-properties[]
 logging.level:
   com.mybank.dbs.payments.integration: INFO
+#end::logging-properties[]

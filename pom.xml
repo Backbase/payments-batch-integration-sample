@@ -26,11 +26,11 @@
 		<boat-maven-plugin.version>0.15.2</boat-maven-plugin.version>
 		<jsr305.version>3.0.2</jsr305.version>
 
-		<batches-bom.version>2021.12-rc.14</batches-bom.version>
+		<backbase-bom.version>2021.12.2</backbase-bom.version>
 
 		<specs.path>${project.build.directory}/specs</specs.path>
-		<payment-batch-integration-inbound-api.version>2.6.0</payment-batch-integration-inbound-api.version>
-		<payment-batch-integration-outbound-api.version>2.5.0</payment-batch-integration-outbound-api.version>
+		<payment-batch-integration-inbound-api.version>2.5.0</payment-batch-integration-inbound-api.version>
+		<payment-batch-integration-outbound-api.version>2.4.0</payment-batch-integration-outbound-api.version>
 
 		<nacha-writer.version>1.0.17</nacha-writer.version>
 	</properties>
@@ -41,8 +41,8 @@
 		<dependencies>
 			<dependency>
 				<groupId>com.backbase</groupId>
-				<artifactId>batches-bom</artifactId>
-				<version>${batches-bom.version}</version>
+				<artifactId>backbase-bom</artifactId>
+				<version>${backbase-bom.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -164,7 +164,7 @@
 			</plugin>
 			<!-- end::add-dependency-plugin[] -->
 
-			<!-- tag::add-boat-plugin[] -->
+			<!-- tag::add-boat-plugin-part-1[] -->
 			<plugin>
 				<groupId>com.backbase.oss</groupId>
 				<artifactId>boat-maven-plugin</artifactId>
@@ -182,7 +182,6 @@
 							<apiPackage>com.backbase.payments.batches.integration.outbound.api</apiPackage>
 						</configuration>
 					</execution>
-					<!-- tag::add-inbound-integration-api[] -->
 					<execution>
 						<id>generate-integration-inbound-resttemplate-client</id>
 						<phase>generate-sources</phase>
@@ -195,7 +194,7 @@
 							<apiPackage>com.backbase.payments.batches.integration.inbound.resttemplate.api</apiPackage>
 						</configuration>
 					</execution>
-					<!-- end::add-inbound-integration-api[] -->
+					<!-- end::add-boat-plugin-part-1[] -->
 					<execution>
 						<id>generate-integration-inbound-webclient-client</id>
 						<phase>generate-sources</phase>
@@ -208,9 +207,10 @@
 							<apiPackage>com.backbase.payments.batches.integration.inbound.webclient.api</apiPackage>
 						</configuration>
 					</execution>
+					<!-- tag::add-boat-plugin-part-2[] -->
 				</executions>
 			</plugin>
-			<!-- end::add-boat-plugin[] -->
+			<!-- end::add-boat-plugin-part-2[] -->
 		</plugins>
 	</build>
 

@@ -54,9 +54,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
     SimpleFileSequenceProvider.class,
     NachaBatchOrderExecutorITConfiguration.class
 })
-@TestPropertySource(value = {
-    "/application-integration-config.properties",
-    "/application-nacha-writer.properties"})
+@TestPropertySource(value = {"/application-nacha-writer.properties"})
 class NachaBatchOrderExecutorIT {
 
     @MockBean
