@@ -75,12 +75,13 @@
 		</dependency>
 		<!-- end::add-building-blocks-dependencies[] -->
 
-		<!-- Required for working with nacha files -->
+		<!-- tag::add-nacha-writer-dependency[] -->
 		<dependency>
 			<groupId>com.backbase.batch.nacha</groupId>
 			<artifactId>nacha-writer</artifactId>
 			<version>${nacha-writer.version}</version>
 		</dependency>
+		<!-- end::add-nacha-writer-dependency[] -->
 
 		<dependency>
 			<groupId>io.swagger</groupId>
