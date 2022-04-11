@@ -21,15 +21,15 @@ public class Application extends SpringBootServletInitializer {
     public static void main(final String[] args) {
         SpringApplication.run(Application.class, args);
     }
-    
+
     @Bean
     public Queue<PostBatchOrderRequest> batchRequestQueue() {
-    	return new ConcurrentLinkedQueue<>();
+        return new ConcurrentLinkedQueue<>();
     }
 
     @Bean
     public Queue<Pair<String, BankResult>> processedResultsPerFileQueue() {
-    	return new ConcurrentLinkedQueue<>();
+        return new ConcurrentLinkedQueue<>();
     }
 
 }

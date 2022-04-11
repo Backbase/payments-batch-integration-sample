@@ -28,118 +28,118 @@ import com.backbase.payments.batches.integration.outbound.model.PostBatchOrderRe
 
 @ExtendWith(MockitoExtension.class)
 class RestBatchOrderExecutorTest {
-	final int PAYMENT_ITEMS_PAGE_SIZE = 100;
+    final int PAYMENT_ITEMS_PAGE_SIZE = 100;
 
-	@Mock
-	BatchOrdersApi batchOrdersApi;
-	
-	@ParameterizedTest
-	@ValueSource(ints = {1, 99, 100, 101})
-	void testValid(int paymentItemCount) {
-		Queue<PostBatchOrderRequest> batchRequestQueue = new LinkedList<>();
-		String batchOrderId = UUID.randomUUID().toString();
-		batchRequestQueue.add(
-			new PostBatchOrderRequest()
-				.id(batchOrderId)
-		);
-		
-		// prepare mock
-		Mockito.when(batchOrdersApi.getBatchOrder(Mockito.eq(batchOrderId))).thenReturn(
-			new GetBatchOrderResponse()
-				.id(batchOrderId)
-				.status(BatchStatus.ACKNOWLEDGED)
-				.totalTransactionsCount(BigDecimal.valueOf(paymentItemCount))
-		);
-		int pageCount = (int)Math.ceil((double)paymentItemCount/PAYMENT_ITEMS_PAGE_SIZE);
-		for (int pageNumber = 0; pageNumber < pageCount; pageNumber++) {
-			Mockito.when(batchOrdersApi.getBatchPayments(Mockito.eq(batchOrderId), Mockito.eq(pageNumber), Mockito.eq(PAYMENT_ITEMS_PAGE_SIZE))).thenReturn(
-				new GetBatchPaymentsResponse()
-					.batchPayments(generatePaymentItems(pageNumber, PAYMENT_ITEMS_PAGE_SIZE, paymentItemCount))
-					.totalBatchPayments((long)paymentItemCount)
-			);
-		}
-		mockStatusTransition(batchOrderId, BatchStatus.ACKNOWLEDGED, BatchStatus.DOWNLOADING);
-		mockStatusTransition(batchOrderId, BatchStatus.DOWNLOADING, BatchStatus.ACCEPTED);
-		mockStatusTransition(batchOrderId, BatchStatus.ACCEPTED, BatchStatus.PROCESSED);
+    @Mock
+    BatchOrdersApi batchOrdersApi;
 
-		// execute
-		RestBatchOrderExecutor batchOrderExecutor = new RestBatchOrderExecutor(batchOrdersApi, batchRequestQueue);
-		batchOrderExecutor.execute();
-		
-		// validate
-		Mockito.verify(batchOrdersApi, Mockito.times(pageCount))
-			.getBatchPayments(Mockito.eq(batchOrderId), Mockito.any(), Mockito.eq(PAYMENT_ITEMS_PAGE_SIZE));
-		
-		ArgumentCaptor<PutBatchOrderRequest> putBatchOrderRequestCaptor = ArgumentCaptor.forClass(PutBatchOrderRequest.class);
-		Mockito.verify(batchOrdersApi)
-			.putBatchOrder(Mockito.eq(batchOrderId), Mockito.eq(BatchStatus.ACCEPTED.getValue()), putBatchOrderRequestCaptor.capture());
-		
-		Assertions.assertEquals(BatchStatus.PROCESSED, putBatchOrderRequestCaptor.getValue().getStatus());
-	}
+    @ParameterizedTest
+    @ValueSource(ints = {1, 99, 100, 101})
+    void testValid(int paymentItemCount) {
+        Queue<PostBatchOrderRequest> batchRequestQueue = new LinkedList<>();
+        String batchOrderId = UUID.randomUUID().toString();
+        batchRequestQueue.add(
+            new PostBatchOrderRequest()
+                .id(batchOrderId)
+        );
 
-	@Test
-	void testRejected() {
-		final int reportedPaymentItemCount = 1;
-		final int returnedPaymentItemCount = 2;
-		
-		Queue<PostBatchOrderRequest> batchRequestQueue = new LinkedList<>();
-		String batchOrderId = UUID.randomUUID().toString();
-		batchRequestQueue.add(
-			new PostBatchOrderRequest()
-				.id(batchOrderId)
-		);
-		
-		// prepare mock
-		Mockito.when(batchOrdersApi.getBatchOrder(Mockito.eq(batchOrderId))).thenReturn(
-			new GetBatchOrderResponse()
-				.id(batchOrderId)
-				.status(BatchStatus.ACKNOWLEDGED)
-				.totalTransactionsCount(BigDecimal.valueOf(reportedPaymentItemCount))
-		);
-		Mockito.when(batchOrdersApi.getBatchPayments(Mockito.eq(batchOrderId), Mockito.eq(0), Mockito.eq(PAYMENT_ITEMS_PAGE_SIZE))).thenReturn(
-			new GetBatchPaymentsResponse()
-				.batchPayments(generatePaymentItems(0, PAYMENT_ITEMS_PAGE_SIZE, returnedPaymentItemCount))
-				.totalBatchPayments((long)returnedPaymentItemCount)
-		);
-		mockStatusTransition(batchOrderId, BatchStatus.ACKNOWLEDGED, BatchStatus.DOWNLOADING);
-		mockStatusTransition(batchOrderId, BatchStatus.DOWNLOADING, BatchStatus.REJECTED);
+        // prepare mock
+        Mockito.when(batchOrdersApi.getBatchOrder(Mockito.eq(batchOrderId))).thenReturn(
+            new GetBatchOrderResponse()
+                .id(batchOrderId)
+                .status(BatchStatus.ACKNOWLEDGED)
+                .totalTransactionsCount(BigDecimal.valueOf(paymentItemCount))
+        );
+        int pageCount = (int)Math.ceil((double)paymentItemCount/PAYMENT_ITEMS_PAGE_SIZE);
+        for (int pageNumber = 0; pageNumber < pageCount; pageNumber++) {
+            Mockito.when(batchOrdersApi.getBatchPayments(Mockito.eq(batchOrderId), Mockito.eq(pageNumber), Mockito.eq(PAYMENT_ITEMS_PAGE_SIZE))).thenReturn(
+                new GetBatchPaymentsResponse()
+                    .batchPayments(generatePaymentItems(pageNumber, PAYMENT_ITEMS_PAGE_SIZE, paymentItemCount))
+                    .totalBatchPayments((long)paymentItemCount)
+            );
+        }
+        mockStatusTransition(batchOrderId, BatchStatus.ACKNOWLEDGED, BatchStatus.DOWNLOADING);
+        mockStatusTransition(batchOrderId, BatchStatus.DOWNLOADING, BatchStatus.ACCEPTED);
+        mockStatusTransition(batchOrderId, BatchStatus.ACCEPTED, BatchStatus.PROCESSED);
 
-		// execute
-		RestBatchOrderExecutor batchOrderExecutor = new RestBatchOrderExecutor(batchOrdersApi, batchRequestQueue);
-		batchOrderExecutor.execute();
-		
-		// validate
-		Mockito.verify(batchOrdersApi)
-			.getBatchPayments(Mockito.eq(batchOrderId), Mockito.eq(0), Mockito.eq(PAYMENT_ITEMS_PAGE_SIZE));
-		
-		ArgumentCaptor<PutBatchOrderRequest> putBatchOrderRequestCaptor = ArgumentCaptor.forClass(PutBatchOrderRequest.class);
-		Mockito.verify(batchOrdersApi)
-			.putBatchOrder(Mockito.eq(batchOrderId), Mockito.eq(BatchStatus.DOWNLOADING.getValue()), putBatchOrderRequestCaptor.capture());
-		
-		Assertions.assertEquals(BatchStatus.REJECTED, putBatchOrderRequestCaptor.getValue().getStatus());
-	}
+        // execute
+        RestBatchOrderExecutor batchOrderExecutor = new RestBatchOrderExecutor(batchOrdersApi, batchRequestQueue);
+        batchOrderExecutor.execute();
 
-	private void mockStatusTransition(String batchOrderId, BatchStatus expectedStatus, BatchStatus status) {
-		Mockito.when(batchOrdersApi.putBatchOrder(Mockito.eq(batchOrderId), Mockito.eq(expectedStatus.getValue()), Mockito.argThat(p->p.getStatus() == status))).thenReturn(
-			new PutBatchOrderResponse()
-				.id(batchOrderId)
-				.status(status)
-		);
-	}
-	
-	private List<IntegrationBatchPayment> generatePaymentItems(int page, int pageSize, int totalCount) {
-		int first = page*pageSize;
-		assert first <= totalCount;
-		int last = first+pageSize;
-		if (last > totalCount) last = totalCount;
-		List<IntegrationBatchPayment> paymentItems = new ArrayList<>(last-first);
-		for(int i=first; i<last; i++) {
-			paymentItems.add(new IntegrationBatchPayment()
-				.id(UUID.randomUUID().toString())
-				.description("paymentItem#"+i)
-			);
-		}
-		return paymentItems;
-	}
+        // validate
+        Mockito.verify(batchOrdersApi, Mockito.times(pageCount))
+            .getBatchPayments(Mockito.eq(batchOrderId), Mockito.any(), Mockito.eq(PAYMENT_ITEMS_PAGE_SIZE));
+
+        ArgumentCaptor<PutBatchOrderRequest> putBatchOrderRequestCaptor = ArgumentCaptor.forClass(PutBatchOrderRequest.class);
+        Mockito.verify(batchOrdersApi)
+            .putBatchOrder(Mockito.eq(batchOrderId), Mockito.eq(BatchStatus.ACCEPTED.getValue()), putBatchOrderRequestCaptor.capture());
+
+        Assertions.assertEquals(BatchStatus.PROCESSED, putBatchOrderRequestCaptor.getValue().getStatus());
+    }
+
+    @Test
+    void testRejected() {
+        final int reportedPaymentItemCount = 1;
+        final int returnedPaymentItemCount = 2;
+
+        Queue<PostBatchOrderRequest> batchRequestQueue = new LinkedList<>();
+        String batchOrderId = UUID.randomUUID().toString();
+        batchRequestQueue.add(
+            new PostBatchOrderRequest()
+                .id(batchOrderId)
+        );
+
+        // prepare mock
+        Mockito.when(batchOrdersApi.getBatchOrder(Mockito.eq(batchOrderId))).thenReturn(
+            new GetBatchOrderResponse()
+                .id(batchOrderId)
+                .status(BatchStatus.ACKNOWLEDGED)
+                .totalTransactionsCount(BigDecimal.valueOf(reportedPaymentItemCount))
+        );
+        Mockito.when(batchOrdersApi.getBatchPayments(Mockito.eq(batchOrderId), Mockito.eq(0), Mockito.eq(PAYMENT_ITEMS_PAGE_SIZE))).thenReturn(
+            new GetBatchPaymentsResponse()
+                .batchPayments(generatePaymentItems(0, PAYMENT_ITEMS_PAGE_SIZE, returnedPaymentItemCount))
+                .totalBatchPayments((long)returnedPaymentItemCount)
+        );
+        mockStatusTransition(batchOrderId, BatchStatus.ACKNOWLEDGED, BatchStatus.DOWNLOADING);
+        mockStatusTransition(batchOrderId, BatchStatus.DOWNLOADING, BatchStatus.REJECTED);
+
+        // execute
+        RestBatchOrderExecutor batchOrderExecutor = new RestBatchOrderExecutor(batchOrdersApi, batchRequestQueue);
+        batchOrderExecutor.execute();
+
+        // validate
+        Mockito.verify(batchOrdersApi)
+            .getBatchPayments(Mockito.eq(batchOrderId), Mockito.eq(0), Mockito.eq(PAYMENT_ITEMS_PAGE_SIZE));
+
+        ArgumentCaptor<PutBatchOrderRequest> putBatchOrderRequestCaptor = ArgumentCaptor.forClass(PutBatchOrderRequest.class);
+        Mockito.verify(batchOrdersApi)
+            .putBatchOrder(Mockito.eq(batchOrderId), Mockito.eq(BatchStatus.DOWNLOADING.getValue()), putBatchOrderRequestCaptor.capture());
+
+        Assertions.assertEquals(BatchStatus.REJECTED, putBatchOrderRequestCaptor.getValue().getStatus());
+    }
+
+    private void mockStatusTransition(String batchOrderId, BatchStatus expectedStatus, BatchStatus status) {
+        Mockito.when(batchOrdersApi.putBatchOrder(Mockito.eq(batchOrderId), Mockito.eq(expectedStatus.getValue()), Mockito.argThat(p->p.getStatus() == status))).thenReturn(
+            new PutBatchOrderResponse()
+                .id(batchOrderId)
+                .status(status)
+        );
+    }
+
+    private List<IntegrationBatchPayment> generatePaymentItems(int page, int pageSize, int totalCount) {
+        int first = page*pageSize;
+        assert first <= totalCount;
+        int last = first+pageSize;
+        if (last > totalCount) last = totalCount;
+        List<IntegrationBatchPayment> paymentItems = new ArrayList<>(last-first);
+        for(int i=first; i<last; i++) {
+            paymentItems.add(new IntegrationBatchPayment()
+                .id(UUID.randomUUID().toString())
+                .description("paymentItem#"+i)
+            );
+        }
+        return paymentItems;
+    }
 
 }
