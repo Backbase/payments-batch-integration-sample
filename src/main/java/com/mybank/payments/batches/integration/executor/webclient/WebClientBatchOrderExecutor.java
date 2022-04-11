@@ -59,7 +59,7 @@ public class WebClientBatchOrderExecutor implements BatchOrderExecutor {
         log.info("Batch scheduler start", batchRequestQueue);
         while (!batchRequestQueue.isEmpty()) {
             PostBatchOrderRequest queuedBatchOrder = batchRequestQueue.poll();
-            log.info("Batch	scheduler process item {}", queuedBatchOrder.getId());
+            log.info("Batch scheduler process item {}", queuedBatchOrder.getId());
 
             batchOrdersApi.getBatchOrder(queuedBatchOrder.getId()).subscribe(
                     batchOrder -> {

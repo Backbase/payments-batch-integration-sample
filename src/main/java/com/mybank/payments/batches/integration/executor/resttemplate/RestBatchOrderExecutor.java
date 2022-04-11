@@ -58,7 +58,7 @@ public class RestBatchOrderExecutor implements BatchOrderExecutor {
         log.info("Batch scheduler start", batchRequestQueue);
         while (!batchRequestQueue.isEmpty()) {
             PostBatchOrderRequest batchItem = batchRequestQueue.poll();
-            log.info("Batch	scheduler process item {}", batchItem.getId());
+            log.info("Batch scheduler process item {}", batchItem.getId());
             GetBatchOrderResponse getBatchOrderResponse = batchOrdersApi.getBatchOrder(batchItem.getId());
             BatchStatus batchStatus = getBatchOrderResponse.getStatus();
             int totalTransactionsCount = getBatchOrderResponse.getTotalTransactionsCount().intValue();
