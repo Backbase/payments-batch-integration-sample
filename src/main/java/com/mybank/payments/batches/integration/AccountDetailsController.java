@@ -22,7 +22,7 @@ public class AccountDetailsController implements AccountDetailsApi {
         log.info("Getting account details [companyId: {}, companyName: {}]", companyId, companyName);
 
         // In the example implementation we just return the requested companyId as an account number
-        // Implement here the proper business logic to resolve account name
+        // Implement here the proper business logic to resolve account number
         String accountNumber = companyId;
 
         return ResponseEntity
