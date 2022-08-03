@@ -26,7 +26,7 @@
         <boat-maven-plugin.version>0.16.0</boat-maven-plugin.version>
         <jsr305.version>3.0.2</jsr305.version>
 
-        <backbase-bom.version>2022.07</backbase-bom.version>
+        <backbase-bom.version>2022.08-LTS</backbase-bom.version>
 
         <specs.path>${project.build.directory}/specs</specs.path>
         <payment-batch-integration-inbound-api.version>2.9.0</payment-batch-integration-inbound-api.version>
