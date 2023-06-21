@@ -2,6 +2,7 @@ package com.mybank.payments.batches.integration.executor.resttemplate;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -81,6 +82,7 @@ class RestBatchOrderExecutorTest {
     void testRejected() {
         final int reportedPaymentItemCount = 1;
         final int returnedPaymentItemCount = 2;
+        final int returnedTotalBatchPayments = 3;
 
         Queue<PostBatchOrderRequest> batchRequestQueue = new LinkedList<>();
         String batchOrderId = UUID.randomUUID().toString();
@@ -99,7 +101,12 @@ class RestBatchOrderExecutorTest {
         Mockito.when(batchOrdersApi.getBatchPayments(Mockito.eq(batchOrderId), Mockito.eq(0), Mockito.eq(PAYMENT_ITEMS_PAGE_SIZE))).thenReturn(
             new GetBatchPaymentsResponse()
                 .batchPayments(generatePaymentItems(0, PAYMENT_ITEMS_PAGE_SIZE, returnedPaymentItemCount))
-                .totalBatchPayments((long)returnedPaymentItemCount)
+                .totalBatchPayments((long)returnedTotalBatchPayments)
+        );
+        Mockito.when(batchOrdersApi.getBatchPayments(Mockito.eq(batchOrderId), Mockito.eq(1), Mockito.eq(PAYMENT_ITEMS_PAGE_SIZE))).thenReturn(
+            new GetBatchPaymentsResponse()
+                .batchPayments(Collections.emptyList())
+                .totalBatchPayments((long)returnedTotalBatchPayments)
         );
         mockStatusTransition(batchOrderId, BatchStatus.ACKNOWLEDGED, BatchStatus.DOWNLOADING);
         mockStatusTransition(batchOrderId, BatchStatus.DOWNLOADING, BatchStatus.REJECTED);
@@ -137,6 +144,7 @@ class RestBatchOrderExecutorTest {
             paymentItems.add(new IntegrationBatchPayment()
                 .id(UUID.randomUUID().toString())
                 .description("paymentItem#"+i)
+                .hidden(false)
             );
         }
         return paymentItems;

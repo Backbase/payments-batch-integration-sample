@@ -2,6 +2,7 @@ package com.mybank.payments.batches.integration.executor.resttemplate;
 
 import com.mybank.payments.batches.integration.executor.BatchOrderExecutor;
 import com.mybank.payments.batches.integration.ExampleMode;
+import java.util.function.Predicate;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -28,7 +29,7 @@ import com.google.common.collect.Lists;
 
 /**
  * @author balazst
- * 
+ *
  * This implementation uses Spring RestTemplate API client
  *
  */
@@ -49,8 +50,12 @@ public class RestBatchOrderExecutor implements BatchOrderExecutor {
     }
 
     /**
-     * Scheduled method, periodically picking up the batch orders from the queue created by the BatchOrderController then retrieves the batch information and payments, 
+     * Scheduled method, periodically picking up the batch orders from the queue created by the BatchOrderController then retrieves the batch information and payments,
      * then marks the batch done
+     * <p>
+     * NB total transactions count reported by `GET /integration-api/v2/batch-orders/{batchOrderId}` can be less than
+     * the number of transactions retrieved from `GET /integration-api/v2/batch-orders/{batchOrderId}/batch-payments`
+     * due to possible presence of "hidden" transactions (e.g. transactions representing batch balancing information)
      */
     @Override
     public void execute() {
@@ -68,24 +73,39 @@ public class RestBatchOrderExecutor implements BatchOrderExecutor {
             // Get all payments from the batch
             List<IntegrationBatchPayment> paymentItems = new ArrayList<IntegrationBatchPayment>(totalTransactionsCount);
             GetBatchPaymentsResponse batchPaymentsResponse;
+            long totalBatchPayments;
             int pageNumber = 0;
             do {
                 batchPaymentsResponse =
                         batchOrdersApi.getBatchPayments(batchItem.getId(), pageNumber++, PAYMENT_ITEMS_PAGE_SIZE);
+                totalBatchPayments = batchPaymentsResponse.getTotalBatchPayments();
                 paymentItems.addAll(batchPaymentsResponse.getBatchPayments());
-            } while ((paymentItems.size() < totalTransactionsCount)
+            } while ((paymentItems.size() < totalBatchPayments)
                     && (batchPaymentsResponse.getBatchPayments().size() > 0));
 
-            if (paymentItems.size() != totalTransactionsCount) {
+            List<IntegrationBatchPayment> hiddenPayments = paymentItems.stream()
+                .filter(IntegrationBatchPayment::getHidden)
+                .collect(Collectors.toList());
+
+            List<IntegrationBatchPayment> actualPayments =
+                paymentItems.stream()
+                    .filter(Predicate.not(IntegrationBatchPayment::getHidden))
+                    .collect(Collectors.toList());
+
+            if (paymentItems.size() != totalBatchPayments || actualPayments.size() != totalBatchPayments) {
                 // Update batch status to REJECTED
                 batchStatus = setBatchStatus(batchItem.getId(), batchStatus, BatchStatus.REJECTED,
                         "Payment item count mismatch");
             } else {
                 // Update batch status to ACCEPTED
                 batchStatus = setBatchStatus(batchItem.getId(), batchStatus, BatchStatus.ACCEPTED, null);
+
+                // Handle information delivered in hidden payments here
+                processHiddenBatchPayments(hiddenPayments);
+
                 // "Process" payments
                 List<IntegrationBatchPayment> failedPaymentItems =
-                        processBatchPayments(batchItem.getId(), getBatchOrderResponse.getAccount(), paymentItems);
+                        processBatchPayments(batchItem.getId(), getBatchOrderResponse.getAccount(), actualPayments);
                 // Handle failed payment items (set the individual paymentItem status to rejected
                 // Note: the batchOrdersApi.putBatchPayments has limit 1000 on paymentItems, e.g the failedPaymentItems must be partitioned by 1000
                 Lists.partition(failedPaymentItems, 1000).forEach(partitionedFailedPaymentItems -> {
@@ -123,6 +143,13 @@ public class RestBatchOrderExecutor implements BatchOrderExecutor {
                 expectedStatus.getValue(),
                 new PutBatchOrderRequest().status(status).reasonText(reasonText))
                 .getStatus();
+    }
+
+    /**
+     * Dummy hidden payments processor
+     */
+    private void processHiddenBatchPayments(List<IntegrationBatchPayment> paymentItems) {
+        log.info("Processing hidden batch with size: {}", paymentItems.size());
     }
 
     /** Dummy method for processing payments
