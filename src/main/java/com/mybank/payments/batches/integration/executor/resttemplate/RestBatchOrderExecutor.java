@@ -71,7 +71,7 @@ public class RestBatchOrderExecutor implements BatchOrderExecutor {
             // Update batch status to DOWNLOADING
             batchStatus = setBatchStatus(batchItem.getId(), batchStatus, BatchStatus.DOWNLOADING, null);
             // Get all payments from the batch
-            List<IntegrationBatchPayment> paymentItems = new ArrayList<IntegrationBatchPayment>(totalTransactionsCount);
+            List<IntegrationBatchPayment> paymentItems = new ArrayList<>();
             GetBatchPaymentsResponse batchPaymentsResponse;
             long totalBatchPayments;
             int pageNumber = 0;
@@ -92,7 +92,7 @@ public class RestBatchOrderExecutor implements BatchOrderExecutor {
                     .filter(Predicate.not(IntegrationBatchPayment::getHidden))
                     .collect(Collectors.toList());
 
-            if (paymentItems.size() != totalBatchPayments || actualPayments.size() != totalBatchPayments) {
+            if (paymentItems.size() != totalBatchPayments || actualPayments.size() != totalTransactionsCount) {
                 // Update batch status to REJECTED
                 batchStatus = setBatchStatus(batchItem.getId(), batchStatus, BatchStatus.REJECTED,
                         "Payment item count mismatch");
